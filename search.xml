@@ -1,76 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>用 GitHub Actions 自动化博客构建与部署</title>
-    <url>/2026/05/23/GitHub-Actions%E8%87%AA%E5%8A%A8%E5%8C%96%E5%8D%9A%E5%AE%A2%E9%83%A8%E7%BD%B2/</url>
-    <content><![CDATA[<h2 id="为什么要自动化？"><a href="#为什么要自动化？" class="headerlink" title="为什么要自动化？"></a>为什么要自动化？</h2><p>之前我更新博客需要手动执行两条命令：</p>
-<figure class="highlight powershell"><table><tr><td class="code"><pre><span class="line">npx hexo generate; npx hexo deploy</span><br></pre></td></tr></table></figure>
+    <title>用 Docker 构建完美开发环境</title>
+    <url>/2026/05/10/Docker%E6%9E%84%E5%BB%BA%E5%AE%8C%E7%BE%8E%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/</url>
+    <content><![CDATA[<h2 id="告别”在我电脑上能跑”"><a href="#告别”在我电脑上能跑”" class="headerlink" title="告别”在我电脑上能跑”"></a>告别”在我电脑上能跑”</h2><p>每个开发者都听过这句话。Docker 从根本上解决了环境一致性问题——将应用及其依赖打包到一个<strong>容器</strong>中，实现”构建一次，到处运行”。</p>
+<h2 id="🐳-Docker-核心概念"><a href="#🐳-Docker-核心概念" class="headerlink" title="🐳 Docker 核心概念"></a>🐳 Docker 核心概念</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">┌─────────────────────────────────────┐</span><br><span class="line">│           Docker 镜像               │</span><br><span class="line">│  ┌─────────────────────────────┐   │</span><br><span class="line">│  │   应用代码 + 运行时 + 依赖    │   │</span><br><span class="line">│  └─────────────────────────────┘   │</span><br><span class="line">│              ▼ 运行                  │</span><br><span class="line">│  ┌─────────────────────────────┐   │</span><br><span class="line">│  │       Docker 容器            │   │</span><br><span class="line">│  └─────────────────────────────┘   │</span><br><span class="line">└─────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
 
-<p>每次写完文章都要重复这几步，偶尔还会忘记。于是我用 GitHub Actions 把这一切自动化了——<strong>推送源码，自动构建部署</strong>。</p>
-<h2 id="最终效果"><a href="#最终效果" class="headerlink" title="最终效果"></a>最终效果</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">git push → GitHub Actions 自动运行 → 博客自动更新</span><br></pre></td></tr></table></figure>
+<h2 id="📦-实战：Node-js-开发环境"><a href="#📦-实战：Node-js-开发环境" class="headerlink" title="📦 实战：Node.js 开发环境"></a>📦 实战：Node.js 开发环境</h2><h3 id="Dockerfile"><a href="#Dockerfile" class="headerlink" title="Dockerfile"></a>Dockerfile</h3><figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line"><span class="keyword">FROM</span> node:<span class="number">20</span>-alpine</span><br><span class="line"></span><br><span class="line"><span class="keyword">WORKDIR</span><span class="language-bash"> /app</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 利用缓存层</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> package*.json ./</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> npm ci --only=production</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> . .</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">EXPOSE</span> <span class="number">3000</span></span><br><span class="line"><span class="keyword">CMD</span><span class="language-bash"> [<span class="string">&quot;node&quot;</span>, <span class="string">&quot;server.js&quot;</span>]</span></span><br></pre></td></tr></table></figure>
 
-<p>不需要手动 hexo generate，不需要 hexo deploy，甚至不需要打开终端。手机上改个 .md 然后 push，博客就更新了。</p>
-<h2 id="工作流设计"><a href="#工作流设计" class="headerlink" title="工作流设计"></a>工作流设计</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">┌────────────────────────────────────┐</span><br><span class="line">│         GitHub Actions CI          │</span><br><span class="line">│                                    │</span><br><span class="line">│  ① Checkout my-blog-source         │</span><br><span class="line">│       ↓                            │</span><br><span class="line">│  ② Setup Node.js 20                │</span><br><span class="line">│       ↓                            │</span><br><span class="line">│  ③ npm ci                          │</span><br><span class="line">│       ↓                            │</span><br><span class="line">│  ④ Configure SSH Key               │</span><br><span class="line">│       ↓                            │</span><br><span class="line">│  ⑤ hexo generate + hexo deploy     │</span><br><span class="line">│       ↓                            │</span><br><span class="line">│  ✅ 部署到 yucu666.github.io       │</span><br><span class="line">└────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+<h3 id="Docker-Compose-编排"><a href="#Docker-Compose-编排" class="headerlink" title="Docker Compose 编排"></a>Docker Compose 编排</h3><figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&#x27;3.8&#x27;</span></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="attr">app:</span></span><br><span class="line">    <span class="attr">build:</span> <span class="string">.</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;3000:3000&quot;</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">.:/app</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">/app/node_modules</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">NODE_ENV=development</span></span><br><span class="line">    <span class="attr">depends_on:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">db</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">redis</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">db:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">postgres:16-alpine</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="attr">POSTGRES_DB:</span> <span class="string">myapp</span></span><br><span class="line">      <span class="attr">POSTGRES_PASSWORD:</span> <span class="string">secret</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">pgdata:/var/lib/postgresql/data</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">redis:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">redis:7-alpine</span></span><br><span class="line"></span><br><span class="line"><span class="attr">volumes:</span></span><br><span class="line">  <span class="attr">pgdata:</span></span><br></pre></td></tr></table></figure>
 
-<h2 id="工作流文件"><a href="#工作流文件" class="headerlink" title="工作流文件"></a>工作流文件</h2><p>在项目根目录创建 <code>.github/workflows/deploy.yml</code>：</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">name:</span> <span class="string">Build</span> <span class="string">&amp;</span> <span class="string">Deploy</span> <span class="string">Blog</span></span><br><span class="line"></span><br><span class="line"><span class="attr">on:</span></span><br><span class="line">  <span class="attr">push:</span></span><br><span class="line">    <span class="attr">branches:</span> [<span class="string">main</span>]</span><br><span class="line">  <span class="attr">schedule:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">cron:</span> <span class="string">&#x27;0 8 * * *&#x27;</span>   <span class="comment"># 每天北京时间 16:00</span></span><br><span class="line">  <span class="attr">workflow_dispatch:</span>       <span class="comment"># 支持手动触发</span></span><br><span class="line"></span><br><span class="line"><span class="attr">jobs:</span></span><br><span class="line">  <span class="attr">build-and-deploy:</span></span><br><span class="line">    <span class="attr">runs-on:</span> <span class="string">ubuntu-latest</span></span><br><span class="line">    <span class="attr">steps:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Checkout</span> <span class="string">source</span></span><br><span class="line">        <span class="attr">uses:</span> <span class="string">actions/checkout@v4</span></span><br><span class="line"></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Setup</span> <span class="string">Node.js</span></span><br><span class="line">        <span class="attr">uses:</span> <span class="string">actions/setup-node@v4</span></span><br><span class="line">        <span class="attr">with:</span></span><br><span class="line">          <span class="attr">node-version:</span> <span class="string">&#x27;20&#x27;</span></span><br><span class="line">          <span class="attr">cache:</span> <span class="string">&#x27;npm&#x27;</span></span><br><span class="line"></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Install</span> <span class="string">dependencies</span></span><br><span class="line">        <span class="attr">run:</span> <span class="string">npm</span> <span class="string">ci</span></span><br><span class="line"></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Setup</span> <span class="string">SSH</span> <span class="string">for</span> <span class="string">deploy</span></span><br><span class="line">        <span class="attr">uses:</span> <span class="string">webfactory/ssh-agent@v0.9.0</span></span><br><span class="line">        <span class="attr">with:</span></span><br><span class="line">          <span class="attr">ssh-private-key:</span> <span class="string">$&#123;&#123;</span> <span class="string">secrets.DEPLOY_KEY</span> <span class="string">&#125;&#125;</span></span><br><span class="line"></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Generate</span> <span class="string">&amp;</span> <span class="string">Deploy</span></span><br><span class="line">        <span class="attr">run:</span> <span class="string">|</span></span><br><span class="line"><span class="string">          git config --global user.name &quot;github-actions[bot]&quot;</span></span><br><span class="line"><span class="string">          git config --global user.email &quot;github-actions[bot]@users.noreply.github.com&quot;</span></span><br><span class="line"><span class="string">          npx hexo clean</span></span><br><span class="line"><span class="string">          npx hexo generate</span></span><br><span class="line"><span class="string">          npx hexo deploy</span></span><br></pre></td></tr></table></figure>
+<h2 id="🚀-多阶段构建优化"><a href="#🚀-多阶段构建优化" class="headerlink" title="🚀 多阶段构建优化"></a>🚀 多阶段构建优化</h2><figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 构建阶段</span></span><br><span class="line"><span class="keyword">FROM</span> node:<span class="number">20</span>-alpine AS builder</span><br><span class="line"><span class="keyword">WORKDIR</span><span class="language-bash"> /app</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> package*.json ./</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> npm ci</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> . .</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> npm run build</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 运行阶段（仅保留必要文件）</span></span><br><span class="line"><span class="keyword">FROM</span> node:<span class="number">20</span>-alpine</span><br><span class="line"><span class="keyword">WORKDIR</span><span class="language-bash"> /app</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> --from=builder /app/dist ./dist</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> --from=builder /app/node_modules ./node_modules</span></span><br><span class="line"><span class="keyword">EXPOSE</span> <span class="number">3000</span></span><br><span class="line"><span class="keyword">CMD</span><span class="language-bash"> [<span class="string">&quot;node&quot;</span>, <span class="string">&quot;dist/server.js&quot;</span>]</span></span><br></pre></td></tr></table></figure>
 
-<h2 id="三个触发条件"><a href="#三个触发条件" class="headerlink" title="三个触发条件"></a>三个触发条件</h2><table>
+<p><strong>效果</strong>: 最终镜像从 800MB 缩小到 120MB !</p>
+<h2 id="📋-最佳实践清单"><a href="#📋-最佳实践清单" class="headerlink" title="📋 最佳实践清单"></a>📋 最佳实践清单</h2><table>
 <thead>
 <tr>
-<th>触发方式</th>
+<th>✅</th>
+<th>实践</th>
 <th>说明</th>
 </tr>
 </thead>
 <tbody><tr>
-<td><code>push</code></td>
-<td>推送 main 分支时自动运行</td>
+<td>✅</td>
+<td>使用 <code>.dockerignore</code></td>
+<td>排除 node_modules, .git 等</td>
 </tr>
 <tr>
-<td><code>schedule</code></td>
-<td>每天定时运行（cron 表达式）</td>
+<td>✅</td>
+<td>多阶段构建</td>
+<td>大幅减小镜像体积</td>
 </tr>
 <tr>
-<td><code>workflow_dispatch</code></td>
-<td>手动在 GitHub 页面点按钮运行</td>
+<td>✅</td>
+<td>Alpine 基础镜像</td>
+<td>安全 + 体积极小 (~5MB)</td>
+</tr>
+<tr>
+<td>✅</td>
+<td>固定版本号</td>
+<td>避免 <code>latest</code> 标签</td>
+</tr>
+<tr>
+<td>✅</td>
+<td>非 root 用户</td>
+<td>提升安全性</td>
+</tr>
+<tr>
+<td>✅</td>
+<td>HEALTHCHECK</td>
+<td>自动检测容器健康状态</td>
 </tr>
 </tbody></table>
-<h3 id="Cron-时间换算"><a href="#Cron-时间换算" class="headerlink" title="Cron 时间换算"></a>Cron 时间换算</h3><p><code>0 8 * * *</code> 是 UTC 时间 8:00，对应北京时间 16:00。</p>
-<p>其他常用时间段：</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">cron:</span> <span class="string">&#x27;0 0 * * *&#x27;</span>     <span class="comment"># 每天北京时间 08:00</span></span><br><span class="line"><span class="attr">cron:</span> <span class="string">&#x27;0 12 * * *&#x27;</span>    <span class="comment"># 每天北京时间 20:00</span></span><br><span class="line"><span class="attr">cron:</span> <span class="string">&#x27;0 8 * * 1&#x27;</span>     <span class="comment"># 每周一北京时间 16:00</span></span><br></pre></td></tr></table></figure>
+<h2 id="🔐-安全加固"><a href="#🔐-安全加固" class="headerlink" title="🔐 安全加固"></a>🔐 安全加固</h2><figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 创建非 root 用户</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> addgroup -g 1001 -S appgroup &amp;&amp; \</span></span><br><span class="line"><span class="language-bash">    adduser -S appuser -u 1001 -G appgroup</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">USER</span> appuser</span><br><span class="line"></span><br><span class="line"><span class="comment"># 健康检查</span></span><br><span class="line"><span class="keyword">HEALTHCHECK</span><span class="language-bash"> --interval=30s --<span class="built_in">timeout</span>=3s \</span></span><br><span class="line"><span class="language-bash">  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || <span class="built_in">exit</span> 1</span></span><br></pre></td></tr></table></figure>
 
-<h2 id="SSH-密钥配置"><a href="#SSH-密钥配置" class="headerlink" title="SSH 密钥配置"></a>SSH 密钥配置</h2><p>因为 Hexo deploy 用 SSH 推送到 GitHub Pages，GitHub Actions 需要能访问目标仓库。</p>
-<h3 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h3><ol>
-<li>查看本地已有的 SSH 私钥</li>
-<li>在 GitHub 的 <code>my-blog-source</code> 仓库 Settings → Secrets → Actions</li>
-<li>新建 <code>DEPLOY_KEY</code>，粘贴私钥内容</li>
-<li>工作流中通过 <code>$&#123;&#123; secrets.DEPLOY_KEY &#125;&#125;</code> 读取</li>
-</ol>
-<h2 id="完整发布流程"><a href="#完整发布流程" class="headerlink" title="完整发布流程"></a>完整发布流程</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">写文章 .md</span><br><span class="line">   │</span><br><span class="line">   ├─ git add .</span><br><span class="line">   ├─ git commit -m &quot;新文章&quot;</span><br><span class="line">   └─ git push</span><br><span class="line">          │</span><br><span class="line">          ▼</span><br><span class="line">   GitHub Actions 自动运行</span><br><span class="line">          │</span><br><span class="line">          ├─ npm ci</span><br><span class="line">          ├─ hexo generate</span><br><span class="line">          └─ hexo deploy</span><br><span class="line">                 │</span><br><span class="line">                 ▼</span><br><span class="line">          ✅ 博客已更新</span><br></pre></td></tr></table></figure>
+<h2 id="🎯-Docker-开发工作流"><a href="#🎯-Docker-开发工作流" class="headerlink" title="🎯 Docker + 开发工作流"></a>🎯 Docker + 开发工作流</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 启动完整开发环境</span></span><br><span class="line">docker compose up -d</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看日志</span></span><br><span class="line">docker compose logs -f app</span><br><span class="line"></span><br><span class="line"><span class="comment"># 进入容器调试</span></span><br><span class="line">docker compose <span class="built_in">exec</span> app sh</span><br><span class="line"></span><br><span class="line"><span class="comment"># 运行一次性命令</span></span><br><span class="line">docker compose run --<span class="built_in">rm</span> app npm <span class="built_in">test</span></span><br></pre></td></tr></table></figure>
 
-<p>一次 push，全自动完成。</p>
-<h2 id="优化建议"><a href="#优化建议" class="headerlink" title="优化建议"></a>优化建议</h2><h3 id="1-缓存依赖"><a href="#1-缓存依赖" class="headerlink" title="1. 缓存依赖"></a>1. 缓存依赖</h3><figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Cache</span> <span class="string">node_modules</span></span><br><span class="line">  <span class="attr">uses:</span> <span class="string">actions/cache@v4</span></span><br><span class="line">  <span class="attr">with:</span></span><br><span class="line">    <span class="attr">path:</span> <span class="string">node_modules</span></span><br><span class="line">    <span class="attr">key:</span> <span class="string">$&#123;&#123;</span> <span class="string">runner.os</span> <span class="string">&#125;&#125;-node-$&#123;&#123;</span> <span class="string">hashFiles(&#x27;package-lock.json&#x27;)</span> <span class="string">&#125;&#125;</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="2-失败通知"><a href="#2-失败通知" class="headerlink" title="2. 失败通知"></a>2. 失败通知</h3><p>可以在工作流末尾添加 Telegram 或邮件通知：</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Notify</span> <span class="string">on</span> <span class="string">failure</span></span><br><span class="line">  <span class="attr">if:</span> <span class="string">failure()</span></span><br><span class="line">  <span class="attr">uses:</span> <span class="string">appleboy/telegram-action@master</span></span><br><span class="line">  <span class="attr">with:</span></span><br><span class="line">    <span class="attr">to:</span> <span class="string">$&#123;&#123;</span> <span class="string">secrets.TELEGRAM_TO</span> <span class="string">&#125;&#125;</span></span><br><span class="line">    <span class="attr">token:</span> <span class="string">$&#123;&#123;</span> <span class="string">secrets.TELEGRAM_TOKEN</span> <span class="string">&#125;&#125;</span></span><br><span class="line">    <span class="attr">message:</span> <span class="string">&quot;博客部署失败，请检查！&quot;</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="3-预览链接"><a href="#3-预览链接" class="headerlink" title="3. 预览链接"></a>3. 预览链接</h3><p>使用 <code>peaceiris/actions-gh-pages</code> 替代 <code>hexo deploy</code> 可以直接在 Action 日志中看到部署预览。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>GitHub Actions 让博客维护变得轻松。现在我的工作流是：</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Docker 不仅仅是一个工具，它是一种<strong>开发哲学</strong>——环境即代码。将你的开发环境写进 Dockerfile，从此告别”环境问题”，专注于真正重要的事情：<strong>写代码</strong>。</p>
 <blockquote>
-<p>打开编辑器 → 写文章 → git push → 完事</p>
+<p>好的开发环境应该是隐形的——它安静地工作，从不打扰你的创造。</p>
 </blockquote>
-<p>不用关心构建、部署、缓存、环境——全部交给 CI。</p>
-<p>如果你也有个人博客，强烈推荐加上这套自动化流程。一次配置，永久受益。</p>
 ]]></content>
       <categories>
         <category>技术教程</category>
       </categories>
       <tags>
-        <tag>GitHub Actions</tag>
-        <tag>CI/CD</tag>
-        <tag>Hexo</tag>
+        <tag>Docker</tag>
         <tag>DevOps</tag>
-        <tag>自动化</tag>
+        <tag>开发环境</tag>
+        <tag>容器化</tag>
       </tags>
   </entry>
   <entry>
@@ -156,146 +154,76 @@
       </tags>
   </entry>
   <entry>
-    <title>现代 CSS 魔法：打造令人惊叹的视觉效果</title>
-    <url>/2026/05/18/%E7%8E%B0%E4%BB%A3CSS%E9%AD%94%E6%B3%95%E8%A7%86%E8%A7%89%E6%95%88%E6%9E%9C/</url>
-    <content><![CDATA[<h2 id="CSS-不再是”简单样式”"><a href="#CSS-不再是”简单样式”" class="headerlink" title="CSS 不再是”简单样式”"></a>CSS 不再是”简单样式”</h2><p>2026 年的 CSS 已经是一门强大的声明式编程语言。从容器查询到视图过渡，现代 CSS 能实现过去需要 JavaScript 才能达成的效果。</p>
-<h2 id="🎨-玻璃态效果-Glassmorphism"><a href="#🎨-玻璃态效果-Glassmorphism" class="headerlink" title="🎨 玻璃态效果 (Glassmorphism)"></a>🎨 玻璃态效果 (Glassmorphism)</h2><figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="selector-class">.glass-card</span> &#123;</span><br><span class="line">  <span class="attribute">background</span>: <span class="built_in">rgba</span>(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">0.05</span>);</span><br><span class="line">  <span class="attribute">backdrop-filter</span>: <span class="built_in">blur</span>(<span class="number">20px</span>);</span><br><span class="line">  <span class="attribute">border</span>: <span class="number">1px</span> solid <span class="built_in">rgba</span>(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">0.1</span>);</span><br><span class="line">  <span class="attribute">border-radius</span>: <span class="number">16px</span>;</span><br><span class="line">  <span class="attribute">box-shadow</span>: <span class="number">0</span> <span class="number">8px</span> <span class="number">32px</span> <span class="built_in">rgba</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0.3</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+    <title>用 GitHub Actions 自动化博客构建与部署</title>
+    <url>/2026/05/23/GitHub-Actions%E8%87%AA%E5%8A%A8%E5%8C%96%E5%8D%9A%E5%AE%A2%E9%83%A8%E7%BD%B2/</url>
+    <content><![CDATA[<h2 id="为什么要自动化？"><a href="#为什么要自动化？" class="headerlink" title="为什么要自动化？"></a>为什么要自动化？</h2><p>之前我更新博客需要手动执行两条命令：</p>
+<figure class="highlight powershell"><table><tr><td class="code"><pre><span class="line">npx hexo generate; npx hexo deploy</span><br></pre></td></tr></table></figure>
 
-<p><strong>核心三要素</strong>:</p>
-<ul>
-<li>半透明背景 + <code>backdrop-filter</code></li>
-<li>细的浅色边框</li>
-<li>柔和的投影</li>
-</ul>
-<h2 id="✨-霓虹发光效果"><a href="#✨-霓虹发光效果" class="headerlink" title="✨ 霓虹发光效果"></a>✨ 霓虹发光效果</h2><figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="selector-class">.neon-text</span> &#123;</span><br><span class="line">  <span class="attribute">color</span>: <span class="number">#fff</span>;</span><br><span class="line">  <span class="attribute">text-shadow</span>:</span><br><span class="line">    <span class="number">0</span> <span class="number">0</span> <span class="number">7px</span> <span class="number">#ff2d95</span>,</span><br><span class="line">    <span class="number">0</span> <span class="number">0</span> <span class="number">10px</span> <span class="number">#ff2d95</span>,</span><br><span class="line">    <span class="number">0</span> <span class="number">0</span> <span class="number">21px</span> <span class="number">#ff2d95</span>,</span><br><span class="line">    <span class="number">0</span> <span class="number">0</span> <span class="number">42px</span> <span class="number">#bd00ff</span>,</span><br><span class="line">    <span class="number">0</span> <span class="number">0</span> <span class="number">82px</span> <span class="number">#bd00ff</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-class">.neon-border</span> &#123;</span><br><span class="line">  <span class="attribute">border</span>: <span class="number">2px</span> solid <span class="number">#00d4ff</span>;</span><br><span class="line">  <span class="attribute">box-shadow</span>:</span><br><span class="line">    <span class="number">0</span> <span class="number">0</span> <span class="number">5px</span> <span class="number">#00d4ff</span>,</span><br><span class="line">    inset <span class="number">0</span> <span class="number">0</span> <span class="number">5px</span> <span class="number">#00d4ff</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>每次写完文章都要重复这几步，偶尔还会忘记。于是我用 GitHub Actions 把这一切自动化了——<strong>推送源码，自动构建部署</strong>。</p>
+<h2 id="最终效果"><a href="#最终效果" class="headerlink" title="最终效果"></a>最终效果</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">git push → GitHub Actions 自动运行 → 博客自动更新</span><br></pre></td></tr></table></figure>
 
-<h2 id="🌀-CSS-动画技巧"><a href="#🌀-CSS-动画技巧" class="headerlink" title="🌀 CSS 动画技巧"></a>🌀 CSS 动画技巧</h2><h3 id="关键帧动画"><a href="#关键帧动画" class="headerlink" title="关键帧动画"></a>关键帧动画</h3><figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="keyword">@keyframes</span> float &#123;</span><br><span class="line">  <span class="number">0%</span>, <span class="number">100%</span> &#123; <span class="attribute">transform</span>: <span class="built_in">translateY</span>(<span class="number">0</span>) <span class="built_in">rotate</span>(<span class="number">0deg</span>); &#125;</span><br><span class="line">  <span class="number">33%</span> &#123; <span class="attribute">transform</span>: <span class="built_in">translateY</span>(-<span class="number">10px</span>) <span class="built_in">rotate</span>(<span class="number">1deg</span>); &#125;</span><br><span class="line">  <span class="number">66%</span> &#123; <span class="attribute">transform</span>: <span class="built_in">translateY</span>(<span class="number">5px</span>) <span class="built_in">rotate</span>(-<span class="number">1deg</span>); &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-class">.floating</span> &#123; <span class="attribute">animation</span>: float <span class="number">6s</span> ease-in-out infinite; &#125;</span><br></pre></td></tr></table></figure>
+<p>不需要手动 hexo generate，不需要 hexo deploy，甚至不需要打开终端。手机上改个 .md 然后 push，博客就更新了。</p>
+<h2 id="工作流设计"><a href="#工作流设计" class="headerlink" title="工作流设计"></a>工作流设计</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">┌────────────────────────────────────┐</span><br><span class="line">│         GitHub Actions CI          │</span><br><span class="line">│                                    │</span><br><span class="line">│  ① Checkout my-blog-source         │</span><br><span class="line">│       ↓                            │</span><br><span class="line">│  ② Setup Node.js 20                │</span><br><span class="line">│       ↓                            │</span><br><span class="line">│  ③ npm ci                          │</span><br><span class="line">│       ↓                            │</span><br><span class="line">│  ④ Configure SSH Key               │</span><br><span class="line">│       ↓                            │</span><br><span class="line">│  ⑤ hexo generate + hexo deploy     │</span><br><span class="line">│       ↓                            │</span><br><span class="line">│  ✅ 部署到 yucu666.github.io       │</span><br><span class="line">└────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
 
-<h3 id="滚动驱动动画"><a href="#滚动驱动动画" class="headerlink" title="滚动驱动动画"></a>滚动驱动动画</h3><figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="keyword">@keyframes</span> slideIn &#123;</span><br><span class="line">  <span class="selector-tag">from</span> &#123; <span class="attribute">opacity</span>: <span class="number">0</span>; <span class="attribute">transform</span>: <span class="built_in">translateX</span>(-<span class="number">100px</span>); &#125;</span><br><span class="line">  <span class="selector-tag">to</span> &#123; <span class="attribute">opacity</span>: <span class="number">1</span>; <span class="attribute">transform</span>: <span class="built_in">translateX</span>(<span class="number">0</span>); &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-class">.reveal</span> &#123;</span><br><span class="line">  <span class="attribute">animation</span>: slideIn linear;</span><br><span class="line">  <span class="attribute">animation-timeline</span>: <span class="built_in">view</span>();</span><br><span class="line">  <span class="attribute">animation-range</span>: entry <span class="number">0%</span> entry <span class="number">100%</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="工作流文件"><a href="#工作流文件" class="headerlink" title="工作流文件"></a>工作流文件</h2><p>在项目根目录创建 <code>.github/workflows/deploy.yml</code>：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">name:</span> <span class="string">Build</span> <span class="string">&amp;</span> <span class="string">Deploy</span> <span class="string">Blog</span></span><br><span class="line"></span><br><span class="line"><span class="attr">on:</span></span><br><span class="line">  <span class="attr">push:</span></span><br><span class="line">    <span class="attr">branches:</span> [<span class="string">main</span>]</span><br><span class="line">  <span class="attr">schedule:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">cron:</span> <span class="string">&#x27;0 8 * * *&#x27;</span>   <span class="comment"># 每天北京时间 16:00</span></span><br><span class="line">  <span class="attr">workflow_dispatch:</span>       <span class="comment"># 支持手动触发</span></span><br><span class="line"></span><br><span class="line"><span class="attr">jobs:</span></span><br><span class="line">  <span class="attr">build-and-deploy:</span></span><br><span class="line">    <span class="attr">runs-on:</span> <span class="string">ubuntu-latest</span></span><br><span class="line">    <span class="attr">steps:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Checkout</span> <span class="string">source</span></span><br><span class="line">        <span class="attr">uses:</span> <span class="string">actions/checkout@v4</span></span><br><span class="line"></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Setup</span> <span class="string">Node.js</span></span><br><span class="line">        <span class="attr">uses:</span> <span class="string">actions/setup-node@v4</span></span><br><span class="line">        <span class="attr">with:</span></span><br><span class="line">          <span class="attr">node-version:</span> <span class="string">&#x27;20&#x27;</span></span><br><span class="line">          <span class="attr">cache:</span> <span class="string">&#x27;npm&#x27;</span></span><br><span class="line"></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Install</span> <span class="string">dependencies</span></span><br><span class="line">        <span class="attr">run:</span> <span class="string">npm</span> <span class="string">ci</span></span><br><span class="line"></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Setup</span> <span class="string">SSH</span> <span class="string">for</span> <span class="string">deploy</span></span><br><span class="line">        <span class="attr">uses:</span> <span class="string">webfactory/ssh-agent@v0.9.0</span></span><br><span class="line">        <span class="attr">with:</span></span><br><span class="line">          <span class="attr">ssh-private-key:</span> <span class="string">$&#123;&#123;</span> <span class="string">secrets.DEPLOY_KEY</span> <span class="string">&#125;&#125;</span></span><br><span class="line"></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Generate</span> <span class="string">&amp;</span> <span class="string">Deploy</span></span><br><span class="line">        <span class="attr">run:</span> <span class="string">|</span></span><br><span class="line"><span class="string">          git config --global user.name &quot;github-actions[bot]&quot;</span></span><br><span class="line"><span class="string">          git config --global user.email &quot;github-actions[bot]@users.noreply.github.com&quot;</span></span><br><span class="line"><span class="string">          npx hexo clean</span></span><br><span class="line"><span class="string">          npx hexo generate</span></span><br><span class="line"><span class="string">          npx hexo deploy</span></span><br></pre></td></tr></table></figure>
 
-<h2 id="🔮-2026-CSS-新特性速览"><a href="#🔮-2026-CSS-新特性速览" class="headerlink" title="🔮 2026 CSS 新特性速览"></a>🔮 2026 CSS 新特性速览</h2><table>
+<h2 id="三个触发条件"><a href="#三个触发条件" class="headerlink" title="三个触发条件"></a>三个触发条件</h2><table>
 <thead>
 <tr>
-<th>特性</th>
-<th>用途</th>
-<th>浏览器支持</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><code>@scope</code></td>
-<td>样式作用域隔离</td>
-<td>✅ 全面支持</td>
-</tr>
-<tr>
-<td><code>nesting</code></td>
-<td>原生嵌套语法</td>
-<td>✅ 全面支持</td>
-</tr>
-<tr>
-<td><code>view-transition</code></td>
-<td>页面过渡动画</td>
-<td>✅ 主流支持</td>
-</tr>
-<tr>
-<td><code>color-mix()</code></td>
-<td>颜色混合函数</td>
-<td>✅ 全面支持</td>
-</tr>
-<tr>
-<td><code>text-wrap: balance</code></td>
-<td>文本平衡换行</td>
-<td>✅ 全面支持</td>
-</tr>
-</tbody></table>
-<h2 id="🎯-实战技巧"><a href="#🎯-实战技巧" class="headerlink" title="🎯 实战技巧"></a>🎯 实战技巧</h2><h3 id="1-CSS-变量构建设计系统"><a href="#1-CSS-变量构建设计系统" class="headerlink" title="1. CSS 变量构建设计系统"></a>1. CSS 变量构建设计系统</h3><figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="selector-pseudo">:root</span> &#123;</span><br><span class="line">  <span class="attr">--color-primary</span>: <span class="number">#ff2d95</span>;</span><br><span class="line">  <span class="attr">--color-secondary</span>: <span class="number">#00d4ff</span>;</span><br><span class="line">  <span class="attr">--space-xs</span>: <span class="number">0.25rem</span>;</span><br><span class="line">  <span class="attr">--space-sm</span>: <span class="number">0.5rem</span>;</span><br><span class="line">  <span class="attr">--space-md</span>: <span class="number">1rem</span>;</span><br><span class="line">  <span class="attr">--space-lg</span>: <span class="number">2rem</span>;</span><br><span class="line">  <span class="attr">--radius</span>: <span class="number">12px</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="2-容器查询实现组件级响应"><a href="#2-容器查询实现组件级响应" class="headerlink" title="2. 容器查询实现组件级响应"></a>2. 容器查询实现组件级响应</h3><figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="keyword">@container</span> (<span class="attribute">min-width</span>: <span class="number">400px</span>) &#123;</span><br><span class="line">  <span class="selector-class">.card</span> &#123; <span class="attribute">grid-template-columns</span>: <span class="number">1</span>fr <span class="number">1</span>fr; &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>现代 CSS 的边界在不断扩展。掌握这些新特性，能让你的网页从”能用”进化到”惊艳”。CSS 不再是设计师的专属——它是每个前端开发者手中的魔法画笔。</p>
-<blockquote>
-<p>好的设计不是让事物更复杂，而是让复杂的事物变得优雅。</p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>技术教程</category>
-      </categories>
-      <tags>
-        <tag>CSS</tag>
-        <tag>前端</tag>
-        <tag>设计</tag>
-        <tag>Web开发</tag>
-        <tag>动画</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>用 Docker 构建完美开发环境</title>
-    <url>/2026/05/10/Docker%E6%9E%84%E5%BB%BA%E5%AE%8C%E7%BE%8E%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/</url>
-    <content><![CDATA[<h2 id="告别”在我电脑上能跑”"><a href="#告别”在我电脑上能跑”" class="headerlink" title="告别”在我电脑上能跑”"></a>告别”在我电脑上能跑”</h2><p>每个开发者都听过这句话。Docker 从根本上解决了环境一致性问题——将应用及其依赖打包到一个<strong>容器</strong>中，实现”构建一次，到处运行”。</p>
-<h2 id="🐳-Docker-核心概念"><a href="#🐳-Docker-核心概念" class="headerlink" title="🐳 Docker 核心概念"></a>🐳 Docker 核心概念</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">┌─────────────────────────────────────┐</span><br><span class="line">│           Docker 镜像               │</span><br><span class="line">│  ┌─────────────────────────────┐   │</span><br><span class="line">│  │   应用代码 + 运行时 + 依赖    │   │</span><br><span class="line">│  └─────────────────────────────┘   │</span><br><span class="line">│              ▼ 运行                  │</span><br><span class="line">│  ┌─────────────────────────────┐   │</span><br><span class="line">│  │       Docker 容器            │   │</span><br><span class="line">│  └─────────────────────────────┘   │</span><br><span class="line">└─────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
-
-<h2 id="📦-实战：Node-js-开发环境"><a href="#📦-实战：Node-js-开发环境" class="headerlink" title="📦 实战：Node.js 开发环境"></a>📦 实战：Node.js 开发环境</h2><h3 id="Dockerfile"><a href="#Dockerfile" class="headerlink" title="Dockerfile"></a>Dockerfile</h3><figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line"><span class="keyword">FROM</span> node:<span class="number">20</span>-alpine</span><br><span class="line"></span><br><span class="line"><span class="keyword">WORKDIR</span><span class="language-bash"> /app</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 利用缓存层</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> package*.json ./</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> npm ci --only=production</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> . .</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">EXPOSE</span> <span class="number">3000</span></span><br><span class="line"><span class="keyword">CMD</span><span class="language-bash"> [<span class="string">&quot;node&quot;</span>, <span class="string">&quot;server.js&quot;</span>]</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="Docker-Compose-编排"><a href="#Docker-Compose-编排" class="headerlink" title="Docker Compose 编排"></a>Docker Compose 编排</h3><figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&#x27;3.8&#x27;</span></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="attr">app:</span></span><br><span class="line">    <span class="attr">build:</span> <span class="string">.</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;3000:3000&quot;</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">.:/app</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">/app/node_modules</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">NODE_ENV=development</span></span><br><span class="line">    <span class="attr">depends_on:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">db</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">redis</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">db:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">postgres:16-alpine</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="attr">POSTGRES_DB:</span> <span class="string">myapp</span></span><br><span class="line">      <span class="attr">POSTGRES_PASSWORD:</span> <span class="string">secret</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">pgdata:/var/lib/postgresql/data</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">redis:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">redis:7-alpine</span></span><br><span class="line"></span><br><span class="line"><span class="attr">volumes:</span></span><br><span class="line">  <span class="attr">pgdata:</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="🚀-多阶段构建优化"><a href="#🚀-多阶段构建优化" class="headerlink" title="🚀 多阶段构建优化"></a>🚀 多阶段构建优化</h2><figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 构建阶段</span></span><br><span class="line"><span class="keyword">FROM</span> node:<span class="number">20</span>-alpine AS builder</span><br><span class="line"><span class="keyword">WORKDIR</span><span class="language-bash"> /app</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> package*.json ./</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> npm ci</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> . .</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> npm run build</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 运行阶段（仅保留必要文件）</span></span><br><span class="line"><span class="keyword">FROM</span> node:<span class="number">20</span>-alpine</span><br><span class="line"><span class="keyword">WORKDIR</span><span class="language-bash"> /app</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> --from=builder /app/dist ./dist</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> --from=builder /app/node_modules ./node_modules</span></span><br><span class="line"><span class="keyword">EXPOSE</span> <span class="number">3000</span></span><br><span class="line"><span class="keyword">CMD</span><span class="language-bash"> [<span class="string">&quot;node&quot;</span>, <span class="string">&quot;dist/server.js&quot;</span>]</span></span><br></pre></td></tr></table></figure>
-
-<p><strong>效果</strong>: 最终镜像从 800MB 缩小到 120MB !</p>
-<h2 id="📋-最佳实践清单"><a href="#📋-最佳实践清单" class="headerlink" title="📋 最佳实践清单"></a>📋 最佳实践清单</h2><table>
-<thead>
-<tr>
-<th>✅</th>
-<th>实践</th>
+<th>触发方式</th>
 <th>说明</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>✅</td>
-<td>使用 <code>.dockerignore</code></td>
-<td>排除 node_modules, .git 等</td>
+<td><code>push</code></td>
+<td>推送 main 分支时自动运行</td>
 </tr>
 <tr>
-<td>✅</td>
-<td>多阶段构建</td>
-<td>大幅减小镜像体积</td>
+<td><code>schedule</code></td>
+<td>每天定时运行（cron 表达式）</td>
 </tr>
 <tr>
-<td>✅</td>
-<td>Alpine 基础镜像</td>
-<td>安全 + 体积极小 (~5MB)</td>
-</tr>
-<tr>
-<td>✅</td>
-<td>固定版本号</td>
-<td>避免 <code>latest</code> 标签</td>
-</tr>
-<tr>
-<td>✅</td>
-<td>非 root 用户</td>
-<td>提升安全性</td>
-</tr>
-<tr>
-<td>✅</td>
-<td>HEALTHCHECK</td>
-<td>自动检测容器健康状态</td>
+<td><code>workflow_dispatch</code></td>
+<td>手动在 GitHub 页面点按钮运行</td>
 </tr>
 </tbody></table>
-<h2 id="🔐-安全加固"><a href="#🔐-安全加固" class="headerlink" title="🔐 安全加固"></a>🔐 安全加固</h2><figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 创建非 root 用户</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> addgroup -g 1001 -S appgroup &amp;&amp; \</span></span><br><span class="line"><span class="language-bash">    adduser -S appuser -u 1001 -G appgroup</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">USER</span> appuser</span><br><span class="line"></span><br><span class="line"><span class="comment"># 健康检查</span></span><br><span class="line"><span class="keyword">HEALTHCHECK</span><span class="language-bash"> --interval=30s --<span class="built_in">timeout</span>=3s \</span></span><br><span class="line"><span class="language-bash">  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || <span class="built_in">exit</span> 1</span></span><br></pre></td></tr></table></figure>
+<h3 id="Cron-时间换算"><a href="#Cron-时间换算" class="headerlink" title="Cron 时间换算"></a>Cron 时间换算</h3><p><code>0 8 * * *</code> 是 UTC 时间 8:00，对应北京时间 16:00。</p>
+<p>其他常用时间段：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">cron:</span> <span class="string">&#x27;0 0 * * *&#x27;</span>     <span class="comment"># 每天北京时间 08:00</span></span><br><span class="line"><span class="attr">cron:</span> <span class="string">&#x27;0 12 * * *&#x27;</span>    <span class="comment"># 每天北京时间 20:00</span></span><br><span class="line"><span class="attr">cron:</span> <span class="string">&#x27;0 8 * * 1&#x27;</span>     <span class="comment"># 每周一北京时间 16:00</span></span><br></pre></td></tr></table></figure>
 
-<h2 id="🎯-Docker-开发工作流"><a href="#🎯-Docker-开发工作流" class="headerlink" title="🎯 Docker + 开发工作流"></a>🎯 Docker + 开发工作流</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 启动完整开发环境</span></span><br><span class="line">docker compose up -d</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看日志</span></span><br><span class="line">docker compose logs -f app</span><br><span class="line"></span><br><span class="line"><span class="comment"># 进入容器调试</span></span><br><span class="line">docker compose <span class="built_in">exec</span> app sh</span><br><span class="line"></span><br><span class="line"><span class="comment"># 运行一次性命令</span></span><br><span class="line">docker compose run --<span class="built_in">rm</span> app npm <span class="built_in">test</span></span><br></pre></td></tr></table></figure>
+<h2 id="SSH-密钥配置"><a href="#SSH-密钥配置" class="headerlink" title="SSH 密钥配置"></a>SSH 密钥配置</h2><p>因为 Hexo deploy 用 SSH 推送到 GitHub Pages，GitHub Actions 需要能访问目标仓库。</p>
+<h3 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h3><ol>
+<li>查看本地已有的 SSH 私钥</li>
+<li>在 GitHub 的 <code>my-blog-source</code> 仓库 Settings → Secrets → Actions</li>
+<li>新建 <code>DEPLOY_KEY</code>，粘贴私钥内容</li>
+<li>工作流中通过 <code>$&#123;&#123; secrets.DEPLOY_KEY &#125;&#125;</code> 读取</li>
+</ol>
+<h2 id="完整发布流程"><a href="#完整发布流程" class="headerlink" title="完整发布流程"></a>完整发布流程</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">写文章 .md</span><br><span class="line">   │</span><br><span class="line">   ├─ git add .</span><br><span class="line">   ├─ git commit -m &quot;新文章&quot;</span><br><span class="line">   └─ git push</span><br><span class="line">          │</span><br><span class="line">          ▼</span><br><span class="line">   GitHub Actions 自动运行</span><br><span class="line">          │</span><br><span class="line">          ├─ npm ci</span><br><span class="line">          ├─ hexo generate</span><br><span class="line">          └─ hexo deploy</span><br><span class="line">                 │</span><br><span class="line">                 ▼</span><br><span class="line">          ✅ 博客已更新</span><br></pre></td></tr></table></figure>
 
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Docker 不仅仅是一个工具，它是一种<strong>开发哲学</strong>——环境即代码。将你的开发环境写进 Dockerfile，从此告别”环境问题”，专注于真正重要的事情：<strong>写代码</strong>。</p>
+<p>一次 push，全自动完成。</p>
+<h2 id="优化建议"><a href="#优化建议" class="headerlink" title="优化建议"></a>优化建议</h2><h3 id="1-缓存依赖"><a href="#1-缓存依赖" class="headerlink" title="1. 缓存依赖"></a>1. 缓存依赖</h3><figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Cache</span> <span class="string">node_modules</span></span><br><span class="line">  <span class="attr">uses:</span> <span class="string">actions/cache@v4</span></span><br><span class="line">  <span class="attr">with:</span></span><br><span class="line">    <span class="attr">path:</span> <span class="string">node_modules</span></span><br><span class="line">    <span class="attr">key:</span> <span class="string">$&#123;&#123;</span> <span class="string">runner.os</span> <span class="string">&#125;&#125;-node-$&#123;&#123;</span> <span class="string">hashFiles(&#x27;package-lock.json&#x27;)</span> <span class="string">&#125;&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-失败通知"><a href="#2-失败通知" class="headerlink" title="2. 失败通知"></a>2. 失败通知</h3><p>可以在工作流末尾添加 Telegram 或邮件通知：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Notify</span> <span class="string">on</span> <span class="string">failure</span></span><br><span class="line">  <span class="attr">if:</span> <span class="string">failure()</span></span><br><span class="line">  <span class="attr">uses:</span> <span class="string">appleboy/telegram-action@master</span></span><br><span class="line">  <span class="attr">with:</span></span><br><span class="line">    <span class="attr">to:</span> <span class="string">$&#123;&#123;</span> <span class="string">secrets.TELEGRAM_TO</span> <span class="string">&#125;&#125;</span></span><br><span class="line">    <span class="attr">token:</span> <span class="string">$&#123;&#123;</span> <span class="string">secrets.TELEGRAM_TOKEN</span> <span class="string">&#125;&#125;</span></span><br><span class="line">    <span class="attr">message:</span> <span class="string">&quot;博客部署失败，请检查！&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-预览链接"><a href="#3-预览链接" class="headerlink" title="3. 预览链接"></a>3. 预览链接</h3><p>使用 <code>peaceiris/actions-gh-pages</code> 替代 <code>hexo deploy</code> 可以直接在 Action 日志中看到部署预览。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>GitHub Actions 让博客维护变得轻松。现在我的工作流是：</p>
 <blockquote>
-<p>好的开发环境应该是隐形的——它安静地工作，从不打扰你的创造。</p>
+<p>打开编辑器 → 写文章 → git push → 完事</p>
 </blockquote>
+<p>不用关心构建、部署、缓存、环境——全部交给 CI。</p>
+<p>如果你也有个人博客，强烈推荐加上这套自动化流程。一次配置，永久受益。</p>
 ]]></content>
       <categories>
         <category>技术教程</category>
       </categories>
       <tags>
         <tag>DevOps</tag>
-        <tag>Docker</tag>
-        <tag>开发环境</tag>
-        <tag>容器化</tag>
+        <tag>GitHub Actions</tag>
+        <tag>CI/CD</tag>
+        <tag>Hexo</tag>
+        <tag>自动化</tag>
       </tags>
   </entry>
   <entry>
@@ -455,6 +383,78 @@
         <tag>Hexo</tag>
         <tag>博客</tag>
         <tag>GitHub Pages</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>现代 CSS 魔法：打造令人惊叹的视觉效果</title>
+    <url>/2026/05/18/%E7%8E%B0%E4%BB%A3CSS%E9%AD%94%E6%B3%95%E8%A7%86%E8%A7%89%E6%95%88%E6%9E%9C/</url>
+    <content><![CDATA[<h2 id="CSS-不再是”简单样式”"><a href="#CSS-不再是”简单样式”" class="headerlink" title="CSS 不再是”简单样式”"></a>CSS 不再是”简单样式”</h2><p>2026 年的 CSS 已经是一门强大的声明式编程语言。从容器查询到视图过渡，现代 CSS 能实现过去需要 JavaScript 才能达成的效果。</p>
+<h2 id="🎨-玻璃态效果-Glassmorphism"><a href="#🎨-玻璃态效果-Glassmorphism" class="headerlink" title="🎨 玻璃态效果 (Glassmorphism)"></a>🎨 玻璃态效果 (Glassmorphism)</h2><figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="selector-class">.glass-card</span> &#123;</span><br><span class="line">  <span class="attribute">background</span>: <span class="built_in">rgba</span>(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">0.05</span>);</span><br><span class="line">  <span class="attribute">backdrop-filter</span>: <span class="built_in">blur</span>(<span class="number">20px</span>);</span><br><span class="line">  <span class="attribute">border</span>: <span class="number">1px</span> solid <span class="built_in">rgba</span>(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">0.1</span>);</span><br><span class="line">  <span class="attribute">border-radius</span>: <span class="number">16px</span>;</span><br><span class="line">  <span class="attribute">box-shadow</span>: <span class="number">0</span> <span class="number">8px</span> <span class="number">32px</span> <span class="built_in">rgba</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0.3</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>核心三要素</strong>:</p>
+<ul>
+<li>半透明背景 + <code>backdrop-filter</code></li>
+<li>细的浅色边框</li>
+<li>柔和的投影</li>
+</ul>
+<h2 id="✨-霓虹发光效果"><a href="#✨-霓虹发光效果" class="headerlink" title="✨ 霓虹发光效果"></a>✨ 霓虹发光效果</h2><figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="selector-class">.neon-text</span> &#123;</span><br><span class="line">  <span class="attribute">color</span>: <span class="number">#fff</span>;</span><br><span class="line">  <span class="attribute">text-shadow</span>:</span><br><span class="line">    <span class="number">0</span> <span class="number">0</span> <span class="number">7px</span> <span class="number">#ff2d95</span>,</span><br><span class="line">    <span class="number">0</span> <span class="number">0</span> <span class="number">10px</span> <span class="number">#ff2d95</span>,</span><br><span class="line">    <span class="number">0</span> <span class="number">0</span> <span class="number">21px</span> <span class="number">#ff2d95</span>,</span><br><span class="line">    <span class="number">0</span> <span class="number">0</span> <span class="number">42px</span> <span class="number">#bd00ff</span>,</span><br><span class="line">    <span class="number">0</span> <span class="number">0</span> <span class="number">82px</span> <span class="number">#bd00ff</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-class">.neon-border</span> &#123;</span><br><span class="line">  <span class="attribute">border</span>: <span class="number">2px</span> solid <span class="number">#00d4ff</span>;</span><br><span class="line">  <span class="attribute">box-shadow</span>:</span><br><span class="line">    <span class="number">0</span> <span class="number">0</span> <span class="number">5px</span> <span class="number">#00d4ff</span>,</span><br><span class="line">    inset <span class="number">0</span> <span class="number">0</span> <span class="number">5px</span> <span class="number">#00d4ff</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="🌀-CSS-动画技巧"><a href="#🌀-CSS-动画技巧" class="headerlink" title="🌀 CSS 动画技巧"></a>🌀 CSS 动画技巧</h2><h3 id="关键帧动画"><a href="#关键帧动画" class="headerlink" title="关键帧动画"></a>关键帧动画</h3><figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="keyword">@keyframes</span> float &#123;</span><br><span class="line">  <span class="number">0%</span>, <span class="number">100%</span> &#123; <span class="attribute">transform</span>: <span class="built_in">translateY</span>(<span class="number">0</span>) <span class="built_in">rotate</span>(<span class="number">0deg</span>); &#125;</span><br><span class="line">  <span class="number">33%</span> &#123; <span class="attribute">transform</span>: <span class="built_in">translateY</span>(-<span class="number">10px</span>) <span class="built_in">rotate</span>(<span class="number">1deg</span>); &#125;</span><br><span class="line">  <span class="number">66%</span> &#123; <span class="attribute">transform</span>: <span class="built_in">translateY</span>(<span class="number">5px</span>) <span class="built_in">rotate</span>(-<span class="number">1deg</span>); &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-class">.floating</span> &#123; <span class="attribute">animation</span>: float <span class="number">6s</span> ease-in-out infinite; &#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="滚动驱动动画"><a href="#滚动驱动动画" class="headerlink" title="滚动驱动动画"></a>滚动驱动动画</h3><figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="keyword">@keyframes</span> slideIn &#123;</span><br><span class="line">  <span class="selector-tag">from</span> &#123; <span class="attribute">opacity</span>: <span class="number">0</span>; <span class="attribute">transform</span>: <span class="built_in">translateX</span>(-<span class="number">100px</span>); &#125;</span><br><span class="line">  <span class="selector-tag">to</span> &#123; <span class="attribute">opacity</span>: <span class="number">1</span>; <span class="attribute">transform</span>: <span class="built_in">translateX</span>(<span class="number">0</span>); &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-class">.reveal</span> &#123;</span><br><span class="line">  <span class="attribute">animation</span>: slideIn linear;</span><br><span class="line">  <span class="attribute">animation-timeline</span>: <span class="built_in">view</span>();</span><br><span class="line">  <span class="attribute">animation-range</span>: entry <span class="number">0%</span> entry <span class="number">100%</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="🔮-2026-CSS-新特性速览"><a href="#🔮-2026-CSS-新特性速览" class="headerlink" title="🔮 2026 CSS 新特性速览"></a>🔮 2026 CSS 新特性速览</h2><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>用途</th>
+<th>浏览器支持</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>@scope</code></td>
+<td>样式作用域隔离</td>
+<td>✅ 全面支持</td>
+</tr>
+<tr>
+<td><code>nesting</code></td>
+<td>原生嵌套语法</td>
+<td>✅ 全面支持</td>
+</tr>
+<tr>
+<td><code>view-transition</code></td>
+<td>页面过渡动画</td>
+<td>✅ 主流支持</td>
+</tr>
+<tr>
+<td><code>color-mix()</code></td>
+<td>颜色混合函数</td>
+<td>✅ 全面支持</td>
+</tr>
+<tr>
+<td><code>text-wrap: balance</code></td>
+<td>文本平衡换行</td>
+<td>✅ 全面支持</td>
+</tr>
+</tbody></table>
+<h2 id="🎯-实战技巧"><a href="#🎯-实战技巧" class="headerlink" title="🎯 实战技巧"></a>🎯 实战技巧</h2><h3 id="1-CSS-变量构建设计系统"><a href="#1-CSS-变量构建设计系统" class="headerlink" title="1. CSS 变量构建设计系统"></a>1. CSS 变量构建设计系统</h3><figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="selector-pseudo">:root</span> &#123;</span><br><span class="line">  <span class="attr">--color-primary</span>: <span class="number">#ff2d95</span>;</span><br><span class="line">  <span class="attr">--color-secondary</span>: <span class="number">#00d4ff</span>;</span><br><span class="line">  <span class="attr">--space-xs</span>: <span class="number">0.25rem</span>;</span><br><span class="line">  <span class="attr">--space-sm</span>: <span class="number">0.5rem</span>;</span><br><span class="line">  <span class="attr">--space-md</span>: <span class="number">1rem</span>;</span><br><span class="line">  <span class="attr">--space-lg</span>: <span class="number">2rem</span>;</span><br><span class="line">  <span class="attr">--radius</span>: <span class="number">12px</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-容器查询实现组件级响应"><a href="#2-容器查询实现组件级响应" class="headerlink" title="2. 容器查询实现组件级响应"></a>2. 容器查询实现组件级响应</h3><figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="keyword">@container</span> (<span class="attribute">min-width</span>: <span class="number">400px</span>) &#123;</span><br><span class="line">  <span class="selector-class">.card</span> &#123; <span class="attribute">grid-template-columns</span>: <span class="number">1</span>fr <span class="number">1</span>fr; &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>现代 CSS 的边界在不断扩展。掌握这些新特性，能让你的网页从”能用”进化到”惊艳”。CSS 不再是设计师的专属——它是每个前端开发者手中的魔法画笔。</p>
+<blockquote>
+<p>好的设计不是让事物更复杂，而是让复杂的事物变得优雅。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>技术教程</category>
+      </categories>
+      <tags>
+        <tag>CSS</tag>
+        <tag>前端</tag>
+        <tag>设计</tag>
+        <tag>Web开发</tag>
+        <tag>动画</tag>
       </tags>
   </entry>
 </search>

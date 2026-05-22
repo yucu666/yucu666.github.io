@@ -38,13 +38,13 @@
     <category term="技术教程" scheme="https://yucu666.github.io/categories/%E6%8A%80%E6%9C%AF%E6%95%99%E7%A8%8B/"/>
     
     
+    <category term="DevOps" scheme="https://yucu666.github.io/tags/DevOps/"/>
+    
     <category term="GitHub Actions" scheme="https://yucu666.github.io/tags/GitHub-Actions/"/>
     
     <category term="CI/CD" scheme="https://yucu666.github.io/tags/CI-CD/"/>
     
     <category term="Hexo" scheme="https://yucu666.github.io/tags/Hexo/"/>
-    
-    <category term="DevOps" scheme="https://yucu666.github.io/tags/DevOps/"/>
     
     <category term="自动化" scheme="https://yucu666.github.io/tags/%E8%87%AA%E5%8A%A8%E5%8C%96/"/>
     
@@ -168,9 +168,9 @@
     <category term="技术教程" scheme="https://yucu666.github.io/categories/%E6%8A%80%E6%9C%AF%E6%95%99%E7%A8%8B/"/>
     
     
-    <category term="DevOps" scheme="https://yucu666.github.io/tags/DevOps/"/>
-    
     <category term="Docker" scheme="https://yucu666.github.io/tags/Docker/"/>
+    
+    <category term="DevOps" scheme="https://yucu666.github.io/tags/DevOps/"/>
     
     <category term="开发环境" scheme="https://yucu666.github.io/tags/%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/"/>
     
